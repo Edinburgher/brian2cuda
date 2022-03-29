@@ -54,3 +54,5 @@ tags
 
 # git worktrees are placed here
 worktrees/
+/examples/results/
+/examples/code/
