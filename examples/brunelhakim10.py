@@ -3,8 +3,8 @@ from matplotlib.pyplot import figure, subplot, plot, xticks, ylabel, xlim, ylim,
 from numpy import zeros, arange, ones
 import time
 start = time.time()
-devicename = 'cuda_standalone'
-#devicename = 'cpp_standalone'
+#devicename = 'cuda_standalone'
+devicename = 'cpp_standalone'
 
 # number of neurons
 N = 5000
@@ -86,7 +86,7 @@ theta = 20*mV
 tau = 20*ms
 delta = 2*ms
 taurefr = 2*ms
-duration = 10*second
+duration = .1*second
 C = 1000
 sparseness = float(C)/params['N']
 J = .1*mV
@@ -106,18 +106,17 @@ group = NeuronGroup(params['N'] * params['M'], eqs, threshold='V>theta',
 group.V = Vr
 
 network.add(group)
+
+conn = Synapses(group, group, on_pre='V += -J', delay=delta)
 print("STARTING connecting")
 subgroups = []
 for m in range(0, params['M']):
     lower = m * params['N']
     upper = (m+1) * params['N']
     subgroup = group[lower:upper]
-    conn = Synapses(subgroup, subgroup, on_pre='V += -J', delay=delta)
-    #conn.connect(condition='lower <= i and i < upper and lower <= j and j < upper ', p=sparseness)
-    conn.connect(p=sparseness)
+    conn.connect(condition='lower <= i and i < upper and lower <= j and j < upper ', p=sparseness)
     subgroups.append(subgroup)
-    network.add(subgroup)
-    network.add(conn)
+network.add(conn)
 
 
 # i_index = []
