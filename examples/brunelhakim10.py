@@ -1,9 +1,3 @@
-
-from matplotlib.pyplot import figure, subplot, plot, xticks, ylabel, xlim, ylim, xlabel, clf
-from numpy import zeros, arange, ones
-import numpy as np
-import time
-start = time.time()
 #devicename = 'cuda_standalone'
 devicename = 'cpp_standalone'
 
@@ -12,6 +6,9 @@ N = 5000
 
 # number of networks to simulate
 nNetworks = 2
+
+# duration
+duration = .1
 
 # whether to profile run
 profiling = True
@@ -28,16 +25,14 @@ monitors = True
 # single precision
 single_precision = False
 
-## the preferences below only apply for cuda_standalone
+# multi threading
+multi_threading = False
 
-# number of post blocks (None is default)
-num_blocks = None
+# run multiple PRMs
+run_PRMs = True
 
-# atomic operations
-atomics = True
-
-# push synapse bundles
-bundle_mode = True
+# connect Synmapses with conditional connect call
+use_conditional_connect = False
 
 ###############################################################################
 ## CONFIGURATION
@@ -49,10 +44,11 @@ params = {'devicename': devicename,
           'M': nNetworks,
           'profiling': profiling,
           'monitors': monitors,
+          'PRMs': run_PRMs,
           'single_precision': single_precision,
-          'num_blocks': num_blocks,
-          'atomics': atomics,
-          'bundle_mode': bundle_mode}
+          'multi_threading': multi_threading,
+          'duration': duration,
+          'use_conditional_connect': use_conditional_connect}
 
 from utils import set_prefs, update_from_command_line
 
@@ -65,6 +61,13 @@ import os
 import matplotlib
 matplotlib.use('Agg')
 
+from matplotlib.pyplot import figure, subplot, plot, xticks, ylabel, xlim, ylim, xlabel, clf
+from numpy import zeros, arange, ones
+import numpy as np
+
+import time
+start = time.time()
+
 from brian2 import *
 if params['devicename'] == 'cuda_standalone':
     import brian2cuda
@@ -73,7 +76,7 @@ if params['devicename'] == 'cuda_standalone':
 name = set_prefs(params, prefs)
 
 codefolder = os.path.join(params['codefolder'], name)
-print('runing example {}'.format(name))
+print('running example {}'.format(name))
 print('compiling model in {}'.format(codefolder))
 
 ###############################################################################
@@ -87,7 +90,7 @@ theta = 20*mV
 tau = 20*ms
 delta = 2*ms
 taurefr = 2*ms
-duration = .1*second
+duration = duration*second
 C = 1000
 sparseness = float(C)/params['N']
 J = .1*mV
@@ -115,23 +118,28 @@ for m in range(0, params['M']):
     lower = m * params['N']
     upper = (m+1) * params['N']
     subgroup = group[lower:upper]
-    # conn.connect(condition='lower <= i and i < upper and lower <= j and j < upper ', p=sparseness)
+    if params['use_conditional_connect']:
+        conn.connect(condition='lower <= i and i < upper and lower <= j and j < upper ', p=sparseness)
+        network.add(conn)
     subgroups.append(subgroup)
 
 # NEW better way
 param_N = params['N']
-conn.connect(j="k for k in sample(param_N*(i//param_N), param_N*(i//param_N+1),1, p=sparseness)")
-network.add(conn)
+
+if not params['use_conditional_connect']:
+    conn.connect(j="k for k in sample(param_N*(i//param_N), param_N*(i//param_N+1),1, p=sparseness)")
+    network.add(conn)
 
 if params['monitors']:
-    M = SpikeMonitor(group)
-    network.add(M)
-    LFPs = []
-    # PopulationRateMonitor results can not be "untangled" after the simulation
-    for subgroup in subgroups:
-        LFP = PopulationRateMonitor(subgroup)
-        network.add(LFP)
-        LFPs.append(LFP)
+    spikemon = SpikeMonitor(group)
+    network.add(spikemon)
+    if params['PRMs']:
+        PRMs = []
+        # PopulationRateMonitor results can not be "untangled" after the simulation
+        for subgroup in subgroups:
+            PRM = PopulationRateMonitor(subgroup)
+            network.add(PRM)
+            PRMs.append(PRM)
 
 
 network.run(duration, report='text', profile=params['profiling'])
@@ -149,14 +157,13 @@ if params['profiling']:
         print('profiling information saved in {}'.format(profilingpath))
 
 if params['monitors']:
-
     for m in range(0, params['M']):
         lower = m * params['N']
         upper = (m+1) * params['N']
         subgroup = group[lower:upper]
 
         subplot(211)
-        points = np.c_[M.t/ms, M.i]
+        points = np.c_[spikemon.t/ms, spikemon.i]
         curPoints = points[np.where((lower <= points[:,1]) & (points[:,1] < upper))].T
         # NOT WORKING.
         # Not even deepcopy itself works, so I dont see generating multiple monitor objects after the fact happening.
@@ -169,7 +176,7 @@ if params['monitors']:
         xlim(0, duration/ms)
 
         subplot(212)
-        plot(LFPs[m].t/ms, LFPs[m].smooth_rate(window='flat', width=0.5*ms)/Hz)
+        plot(PRMs[m].t/ms, PRMs[m].smooth_rate(window='flat', width=0.5*ms)/Hz)
         xlim(0, duration/ms)
         #show()
 
