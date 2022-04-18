@@ -26,13 +26,24 @@ monitors = True
 single_precision = False
 
 # multi threading
-multi_threading = False
+multi_threading = True
 
 # run multiple PRMs
 run_PRMs = True
 
 # connect Synmapses with conditional connect call
 use_conditional_connect = False
+
+## the preferences below only apply for cuda_standalone
+
+# number of post blocks (None is default)
+num_blocks = None
+
+# atomic operations
+atomics = True
+
+# push synapse bundles
+bundle_mode = True
 
 ###############################################################################
 ## CONFIGURATION
@@ -48,7 +59,10 @@ params = {'devicename': devicename,
           'single_precision': single_precision,
           'multi_threading': multi_threading,
           'duration': duration,
-          'use_conditional_connect': use_conditional_connect}
+          'use_conditional_connect': use_conditional_connect,
+          'num_blocks': num_blocks,
+          'atomics': atomics,
+          'bundle_mode': bundle_mode}
 
 from utils import set_prefs, update_from_command_line
 
@@ -84,6 +98,10 @@ print('compiling model in {}'.format(codefolder))
 
 set_device(params['devicename'], directory=codefolder, compile=True, run=True,
            debug=False)
+
+
+if params['devicename'] == 'cpp_standalone' and params['multi_threading']:
+    prefs.devices.cpp_standalone.openmp_threads = 16
 
 Vr = 10*mV
 theta = 20*mV
@@ -153,7 +171,7 @@ if params['profiling']:
     print(profiling_summary())
     profilingpath = os.path.join(params['resultsfolder'], '{}.txt'.format(name))
     with open(profilingpath, 'w') as profiling_file:
-        profiling_file.write(str(profiling_summary()))
+        profiling_file.write(str(profiling_summary()) + '\n_last_run_time = ' + str(device._last_run_time))
         print('profiling information saved in {}'.format(profilingpath))
 
 if params['monitors']:
@@ -175,10 +193,11 @@ if params['monitors']:
         plot(curPoints[0], curPoints[1], '.')
         xlim(0, duration/ms)
 
-        subplot(212)
-        plot(PRMs[m].t/ms, PRMs[m].smooth_rate(window='flat', width=0.5*ms)/Hz)
-        xlim(0, duration/ms)
-        #show()
+        if params['PRMs']:
+            subplot(212)
+            plot(PRMs[m].t/ms, PRMs[m].smooth_rate(window='flat', width=0.5*ms)/Hz)
+            xlim(0, duration/ms)
+            #show()
 
         plotpath = os.path.join(params['resultsfolder'], '{}.png'.format(name + "_Network_" + str(m+1)))
         savefig(plotpath)
