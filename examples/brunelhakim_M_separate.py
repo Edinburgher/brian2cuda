@@ -1,4 +1,5 @@
-from multiprocessing import Process
+import ctypes
+from multiprocessing import Process, Value
 
 devicename = 'cpp_standalone'
 
@@ -27,7 +28,7 @@ monitors = True
 single_precision = False
 
 # multi threading
-multi_threading = True
+multi_threading = False
 
 # run multiple PRMs
 run_PRMs = True
@@ -94,6 +95,10 @@ eqs = """
 dV/dt = (-V+muext + sigmaext * sqrt(tau) * xi)/tau : volt
 """
 
+times = {'last_run': 0.0, 'compile': 0.0, 'run_binary': 0.0}
+
+if params['multi_threading']:
+    counter = Value(ctypes.py_object, times)
 
 def run_sim(m):
     set_device(params['devicename'], directory=None, run=True, debug=False)
@@ -125,8 +130,27 @@ def run_sim(m):
     if params['profiling']:
         print(profiling_summary())
         profilingpath = os.path.join(params['resultsfolder'], '{}_{}.txt'.format(name, str(m + 1)))
+
+
+        # TODO: Not working, why?
+        if params['multi_threading']:
+            global counter
+            with counter.get_lock():
+                counter.value['last_run'] += device._last_run_time
+                counter.value['compile'] += device.timers['compile']['all']
+                counter.value['run_binary'] += device.timers['run_binary']
+        else:
+            global times
+            times['last_run'] += device._last_run_time
+            times['compile'] += device.timers['compile']['all']
+            times['run_binary'] += device.timers['run_binary']
         with open(profilingpath, 'w') as profiling_file:
-            profiling_file.write(str(profiling_summary()) + '\n_last_run_time = ' + str(device._last_run_time))
+            profiling_file.write(
+                str(profiling_summary()) +
+                '\n_last_run_time = ' + str(device._last_run_time) +
+                '\ncompilation time = ' + str(device.timers['compile']['all']) +
+                '\nbinary run time = ' + str(device.timers['run_binary'])
+            )
             print('profiling information saved in {}'.format(profilingpath))
 
     if params['monitors']:
@@ -162,4 +186,11 @@ else:
     for m in range(0, params['M']):
         run_sim(m)
 
-print('It took', time.time()-start, 'seconds.')
+if params['multi_threading']:
+    times = counter.value
+
+print('Total _last_run_time: ', times['last_run'])
+print('Total compilation time: ', times['compile'])
+print('Total Binary run time: ', times['run_binary'])
+print('Total time: ', time.time()-start, 'seconds.')
+

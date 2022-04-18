@@ -171,7 +171,12 @@ if params['profiling']:
     print(profiling_summary())
     profilingpath = os.path.join(params['resultsfolder'], '{}.txt'.format(name))
     with open(profilingpath, 'w') as profiling_file:
-        profiling_file.write(str(profiling_summary()) + '\n_last_run_time = ' + str(device._last_run_time))
+        profiling_file.write(
+            str(profiling_summary()) +
+            '\n_last_run_time = ' + str(device._last_run_time) +
+            '\ncompilation time = ' + str(device.timers['compile']['all']) +
+            '\nbinary run time = ' + str(device.timers['run_binary'])
+        )
         print('profiling information saved in {}'.format(profilingpath))
 
 if params['monitors']:
@@ -206,4 +211,7 @@ if params['monitors']:
 
     print('the generated model in {} needs to removed manually if wanted'.format(codefolder))
 
-print('It took', time.time()-start, 'seconds.')
+print('_last_run_time = ', device._last_run_time)
+print('compilation time = ', device.timers['compile']['all'])
+print('Binary run time: ', device.timers['run_binary'])
+print('Total time: ', time.time()-start, 'seconds.')

@@ -2,7 +2,6 @@
 base='benchmark_multiple_networks'
 codefolder=$base/code
 resultsfolder=$base/results
-logfile=$base/log.txt
 benchmark_results=$base/benchmark_results.txt
 
 # Exit at first failing example run
@@ -25,52 +24,60 @@ for m in 5 10 50; do
             echo "------------------------------------------------------------------------------------" >> $benchmark_results
 
             start_time=$(($(date +%s%N)/1000000))
-            cmd="python brunelhakim_M_joined.py --devicename cuda_standalone $args"
+            cmd="python brunelhakim_M_separate.py $args"
             echo $cmd
-            $cmd 2>&1 | tee -a $logfile
+            echo "brunelhakim_M_separate (cpp, single thread)" >> $benchmark_results
+            $cmd 2>&1 | tail -4 >> $benchmark_results
             end_time=$(($(date +%s%N)/1000000))
             elapsed=$(($end_time-$start_time))
-            echo "brunelhakim_M_joined (cuda, connect with j syntax): $elapsed" >> $benchmark_results
+            echo  "Total bash time: $elapsed ms" >> $benchmark_results
 
             start_time=$(($(date +%s%N)/1000000))
-            cmd="python brunelhakim_M_joined.py --devicename cuda_standalone --use-conditional-connect $args"
+            cmd="python brunelhakim_M_separate.py --multi-threading $args"
+            echo "brunelhakim_M_separate (cpp, multi_threading)" >> $benchmark_results
             echo $cmd
-            $cmd 2>&1 | tee -a $logfile
+            $cmd 2>&1 | tail -4 >> $benchmark_results
             end_time=$(($(date +%s%N)/1000000))
             elapsed=$(($end_time-$start_time))
-            echo "brunelhakim_M_joined (cuda, conditional_connect): $elapsed" >> $benchmark_results
+            echo  "Total bash time: $elapsed ms" >> $benchmark_results
 
             start_time=$(($(date +%s%N)/1000000))
             cmd="python brunelhakim_M_joined.py --devicename cpp_standalone $args"
             echo $cmd
-            $cmd 2>&1 | tee -a $logfile
+            echo "brunelhakim_M_joined (cpp, connect with j syntax)" >> $benchmark_results
+            $cmd 2>&1 | tail -4 >> $benchmark_results
             end_time=$(($(date +%s%N)/1000000))
             elapsed=$(($end_time-$start_time))
-            echo "brunelhakim_M_joined (cpp, connect with j syntax): $elapsed" >> $benchmark_results
+            echo  "Total bash time: $elapsed ms" >> $benchmark_results
 
             start_time=$(($(date +%s%N)/1000000))
             cmd="python brunelhakim_M_joined.py --devicename cpp_standalone --use-conditional-connect $args"
             echo $cmd
-            $cmd 2>&1 | tee -a $logfile
+            echo "brunelhakim_M_joined (cpp, conditional_connect)" >> $benchmark_results
+            $cmd 2>&1 | tail -4 >> $benchmark_results
             end_time=$(($(date +%s%N)/1000000))
             elapsed=$(($end_time-$start_time))
-            echo "brunelhakim_M_joined (cpp, conditional_connect): $elapsed" >> $benchmark_results
+            echo  "Total bash time: $elapsed ms" >> $benchmark_results
 
             start_time=$(($(date +%s%N)/1000000))
-            cmd="python brunelhakim_M_separate.py $args"
+            cmd="python brunelhakim_M_joined.py --devicename cuda_standalone $args"
             echo $cmd
-            $cmd 2>&1 | tee -a $logfile
+            echo "brunelhakim_M_joined (cuda, connect with j syntax)" >> $benchmark_results
+            $cmd 2>&1 | tail -4 >> $benchmark_results
             end_time=$(($(date +%s%N)/1000000))
             elapsed=$(($end_time-$start_time))
-            echo "brunelhakim_M_separate (cpp, single thread): $elapsed" >> $benchmark_results
+            echo  "Total bash time: $elapsed ms" >> $benchmark_results
 
             start_time=$(($(date +%s%N)/1000000))
-            cmd="python brunelhakim_M_separate.py --multi-threading $args"
+            cmd="python brunelhakim_M_joined.py --devicename cuda_standalone --use-conditional-connect $args"
             echo $cmd
-            $cmd 2>&1 | tee -a $logfile
+            echo "brunelhakim_M_joined (cuda, conditional_connect)" >> $benchmark_results
+            $cmd 2>&1 | tail -4 >> $benchmark_results
             end_time=$(($(date +%s%N)/1000000))
             elapsed=$(($end_time-$start_time))
-            echo "brunelhakim_M_separate (cpp, multi_threading): $elapsed" >> $benchmark_results
+            echo  "Total bash time: $elapsed ms" >> $benchmark_results
+
+
         done
     done
 done
