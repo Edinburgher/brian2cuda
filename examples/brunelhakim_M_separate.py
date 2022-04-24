@@ -1,6 +1,8 @@
 import ctypes
 from multiprocessing import Process, Value
 
+from examples.write_results_csv import append_total_run_time, write_results_csv
+
 devicename = 'cpp_standalone'
 
 # number of neurons
@@ -30,6 +32,9 @@ single_precision = False
 # multi threading
 multi_threading = False
 
+# benchmark folder
+benchmarkfolder = '.'
+
 # run multiple PRMs
 run_PRMs = True
 
@@ -46,6 +51,7 @@ params = {'devicename': devicename,
           'PRMs': run_PRMs,
           'single_precision': single_precision,
           'multi_threading': multi_threading,
+          'benchmarkfolder': benchmarkfolder,
           'duration': duration}
 
 from utils import set_prefs, update_from_command_line
@@ -114,6 +120,9 @@ def run_sim(m):
     network.add(conn)
 
     if params['monitors']:
+        # TODO: not working in cuda
+        # statemon = StateMonitor(group, 'V', record=True)
+        # network.add(statemon)
         spikemon = SpikeMonitor(group)
         network.add(spikemon)
         if params['PRMs']:
@@ -129,7 +138,6 @@ def run_sim(m):
         os.mkdir(params['resultsfolder'])  # for plots and profiling txt file
     if params['profiling']:
         print(profiling_summary())
-        profilingpath = os.path.join(params['resultsfolder'], '{}_{}.txt'.format(name, str(m + 1)))
 
 
         # TODO: Not working, why?
@@ -144,6 +152,27 @@ def run_sim(m):
             times['last_run'] += device._last_run_time
             times['compile'] += device.timers['compile']['all']
             times['run_binary'] += device.timers['run_binary']
+
+        if m == 0:
+            multi_threading_type = 'multiprocess' if params['multi_threading'] else 'None'
+            profiling_dict = dict(network.profiling_info)
+            sum_ratemonitors = sum([v for (k, v) in profiling_dict.items() if 'ratemonitor' in k])
+            write_results_csv(
+                params['benchmarkfolder'], network_count=params['M'],
+                device_name=params['devicename'], duration=params['duration'], has_PRMs=params['PRMs'], is_merged=False,
+                multithreading_type=multi_threading_type, uses_conditional_connect='N/A',
+                last_run_time=device._last_run_time, compilation_time=device.timers['compile']['all'],
+                binary_run_time=device.timers['run_binary'],
+                neurongroup_stateupdater=profiling_dict['neurongroup_stateupdater_codeobject'],
+                neurongroup_thresholder=profiling_dict['neurongroup_thresholder_codeobject'],
+                neurongroup_resetter=profiling_dict['neurongroup_resetter_codeobject'],
+                synapses_pre=profiling_dict['synapses_pre_codeobject'],
+                synapses_pre_push_spikes=profiling_dict['synapses_pre_push_spikes'],
+                spikemonitor=profiling_dict['spikemonitor_codeobject'],
+                #statemonitor=profiling_dict['statemonitor_codeobject'],
+                sum_ratemonitors=sum_ratemonitors,
+            )
+        profilingpath = os.path.join(params['resultsfolder'], '{}_{}.txt'.format(name, str(m + 1)))
         with open(profilingpath, 'w') as profiling_file:
             profiling_file.write(
                 str(profiling_summary()) +
@@ -193,4 +222,5 @@ print('Total _last_run_time: ', times['last_run'])
 print('Total compilation time: ', times['compile'])
 print('Total Binary run time: ', times['run_binary'])
 print('Total time: ', time.time()-start, 'seconds.')
+append_total_run_time(params['benchmarkfolder'],time.time()-start)
 

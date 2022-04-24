@@ -34,6 +34,9 @@ run_PRMs = True
 # connect Synmapses with conditional connect call
 use_conditional_connect = False
 
+# benchmark folder
+benchmarkfolder = '.'
+
 ## the preferences below only apply for cuda_standalone
 
 # number of post blocks (None is default)
@@ -60,6 +63,7 @@ params = {'devicename': devicename,
           'multi_threading': multi_threading,
           'duration': duration,
           'use_conditional_connect': use_conditional_connect,
+          'benchmarkfolder': benchmarkfolder,
           'num_blocks': num_blocks,
           'atomics': atomics,
           'bundle_mode': bundle_mode}
@@ -102,6 +106,11 @@ set_device(params['devicename'], directory=codefolder, compile=True, run=True,
 
 if params['devicename'] == 'cpp_standalone' and params['multi_threading']:
     prefs.devices.cpp_standalone.openmp_threads = 16
+    multi_threading_type = "openmp"
+elif params['devicename'] == 'cuda_standalone':
+    multi_threading_type = "GPU"
+else:
+    multi_threading_type = "none"
 
 Vr = 10*mV
 theta = 20*mV
@@ -149,6 +158,9 @@ if not params['use_conditional_connect']:
     network.add(conn)
 
 if params['monitors']:
+    # TODO: not working in cuda
+    # statemon = StateMonitor(group, 'V', record=True)
+    # network.add(statemon)
     spikemon = SpikeMonitor(group)
     network.add(spikemon)
     if params['PRMs']:
@@ -168,6 +180,26 @@ network.run(duration, report='text', profile=params['profiling'])
 if not os.path.exists(params['resultsfolder']):
     os.mkdir(params['resultsfolder']) # for plots and profiling txt file
 if params['profiling']:
+    from write_results_csv import write_results_csv, append_total_run_time
+
+    profiling_dict = dict(network.profiling_info)
+    sum_ratemonitors = sum([v for (k,v) in profiling_dict.items() if 'ratemonitor' in k])
+    write_results_csv(
+        params['benchmarkfolder'], network_count=params['M'],
+        device_name=params['devicename'], duration=params['duration'], has_PRMs=params['PRMs'], is_merged=True,
+        multithreading_type=multi_threading_type, uses_conditional_connect=params['use_conditional_connect'],
+        last_run_time=device._last_run_time, compilation_time=device.timers['compile']['all'],
+        binary_run_time=device.timers['run_binary'],
+        neurongroup_stateupdater=profiling_dict['neurongroup_stateupdater_codeobject'],
+        neurongroup_thresholder=profiling_dict['neurongroup_thresholder_codeobject'],
+        neurongroup_resetter=profiling_dict['neurongroup_resetter_codeobject'],
+        synapses_pre=profiling_dict['synapses_pre_codeobject'],
+        synapses_pre_push_spikes=profiling_dict['synapses_pre_push_spikes'],
+        spikemonitor=profiling_dict['spikemonitor_codeobject'],
+        #statemonitor=profiling_dict['statemonitor_codeobject'],
+        sum_ratemonitors=sum_ratemonitors,
+    )
+
     print(profiling_summary())
     profilingpath = os.path.join(params['resultsfolder'], '{}.txt'.format(name))
     with open(profilingpath, 'w') as profiling_file:
@@ -215,3 +247,4 @@ print('_last_run_time = ', device._last_run_time)
 print('compilation time = ', device.timers['compile']['all'])
 print('Binary run time: ', device.timers['run_binary'])
 print('Total time: ', time.time()-start, 'seconds.')
+append_total_run_time(params['benchmarkfolder'],time.time()-start)
