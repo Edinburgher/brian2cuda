@@ -135,7 +135,8 @@ def set_prefs(params, prefs):
         prefs['devices.cuda_standalone.use_atomics'] = params['atomics']
         name = _update_config_name(name, params, only_keys=only_cuda)
     elif params['devicename'] == 'cpp_standalone':
-        prefs['devices.cpp_standalone.openmp_threads'] = params['cpp_threads']
+        if('cpp_threads' in params):
+            prefs['devices.cpp_standalone.openmp_threads'] = params['cpp_threads']
         name = _update_config_name(name, params, only_keys=only_cpp)
     elif params['devicename'] == 'genn':
         if params['genn_pre_mode']:

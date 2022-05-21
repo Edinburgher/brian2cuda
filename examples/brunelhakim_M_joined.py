@@ -1,11 +1,11 @@
-#devicename = 'cuda_standalone'
-devicename = 'cpp_standalone'
+devicename = 'cuda_standalone'
+#devicename = 'cpp_standalone'
 
 # number of neurons
 N = 5000
 
 # number of networks to simulate
-nNetworks = 2
+nNetworks = 10
 
 # duration
 duration = .1
@@ -63,16 +63,13 @@ params = {'devicename': devicename,
           'multi_threading': multi_threading,
           'duration': duration,
           'use_conditional_connect': use_conditional_connect,
-          'benchmarkfolder': benchmarkfolder,
-          'num_blocks': num_blocks,
+          'partitions': num_blocks,
           'atomics': atomics,
           'bundle_mode': bundle_mode}
 
 from utils import set_prefs, update_from_command_line
 
-# update params from command line
-choices={'devicename': ['cuda_standalone', 'cpp_standalone', 'genn']}
-update_from_command_line(params, choices=choices)
+update_from_command_line(params)
 
 # do the imports after parsing command line arguments (quicker --help)
 import os
@@ -90,6 +87,15 @@ from brian2 import *
 if params['devicename'] == 'cuda_standalone':
     import brian2cuda
 
+
+if params['devicename'] == 'cpp_standalone' and params['multi_threading']:
+    params['cpp_threads'] = 16
+    multi_threading_type = "openmp"
+elif params['devicename'] == 'cuda_standalone':
+    multi_threading_type = "GPU"
+else:
+    multi_threading_type = "none"
+
 # set brian2 prefs from params dict
 name = set_prefs(params, prefs)
 
@@ -103,14 +109,6 @@ print('compiling model in {}'.format(codefolder))
 set_device(params['devicename'], directory=codefolder, compile=True, run=True,
            debug=False)
 
-
-if params['devicename'] == 'cpp_standalone' and params['multi_threading']:
-    prefs.devices.cpp_standalone.openmp_threads = 16
-    multi_threading_type = "openmp"
-elif params['devicename'] == 'cuda_standalone':
-    multi_threading_type = "GPU"
-else:
-    multi_threading_type = "none"
 
 Vr = 10*mV
 theta = 20*mV
@@ -152,15 +150,15 @@ for m in range(0, params['M']):
 
 # NEW better way
 param_N = params['N']
+param_M = params['M']
 
 if not params['use_conditional_connect']:
-    conn.connect(j="k for k in sample(param_N*(i//param_N), param_N*(i//param_N+1),1, p=sparseness)")
+    conn.connect(j="k for k in sample(i%param_M, param_M*param_N, param_M, p=sparseness)")
     network.add(conn)
 
 if params['monitors']:
-    # TODO: not working in cuda
-    # statemon = StateMonitor(group, 'V', record=True)
-    # network.add(statemon)
+    statemon = StateMonitor(group, 'V', record=True)
+    network.add(statemon)
     spikemon = SpikeMonitor(group)
     network.add(spikemon)
     if params['PRMs']:
@@ -185,7 +183,7 @@ if params['profiling']:
     profiling_dict = dict(network.profiling_info)
     sum_ratemonitors = sum([v for (k,v) in profiling_dict.items() if 'ratemonitor' in k])
     write_results_csv(
-        params['benchmarkfolder'], network_count=params['M'],
+        benchmarkfolder, network_count=params['M'],
         device_name=params['devicename'], duration=params['duration'], has_PRMs=params['PRMs'], is_merged=True,
         multithreading_type=multi_threading_type, uses_conditional_connect=params['use_conditional_connect'],
         last_run_time=device._last_run_time, compilation_time=device.timers['compile']['all'],
@@ -247,4 +245,4 @@ print('_last_run_time = ', device._last_run_time)
 print('compilation time = ', device.timers['compile']['all'])
 print('Binary run time: ', device.timers['run_binary'])
 print('Total time: ', time.time()-start, 'seconds.')
-append_total_run_time(params['benchmarkfolder'],time.time()-start)
+append_total_run_time(benchmarkfolder,time.time()-start)

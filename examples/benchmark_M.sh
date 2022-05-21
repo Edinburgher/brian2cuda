@@ -16,7 +16,6 @@ for m in 5 10 50; do
                 --M $m \
                 --profiling \
                 --monitors \
-                --benchmarkfolder $base\
                 --duration $duration \
                 --"$prm_flag"PRMs"
 
@@ -24,9 +23,9 @@ for m in 5 10 50; do
             echo $cmd
             $cmd 2>&1 | tee -a $logfile
 
-            cmd="python brunelhakim_M_separate.py --multi-threading $args"
-            echo $cmd
-            $cmd 2>&1 | tee -a $logfile
+#            cmd="python brunelhakim_M_separate.py --multi-processing $args"
+#            echo $cmd
+#            $cmd 2>&1 | tee -a $logfile
 
             cmd="python brunelhakim_M_joined.py --devicename cpp_standalone $args"
             echo $cmd
