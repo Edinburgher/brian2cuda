@@ -56,3 +56,4 @@ tags
 worktrees/
 /examples/results/
 /examples/code/
+/frozen_repos/brian2/*

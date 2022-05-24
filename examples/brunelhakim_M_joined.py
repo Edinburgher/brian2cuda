@@ -194,7 +194,7 @@ if params['profiling']:
         synapses_pre=profiling_dict['synapses_pre_codeobject'],
         synapses_pre_push_spikes=profiling_dict['synapses_pre_push_spikes'],
         spikemonitor=profiling_dict['spikemonitor_codeobject'],
-        #statemonitor=profiling_dict['statemonitor_codeobject'],
+        statemonitor=profiling_dict['statemonitor_codeobject'],
         sum_ratemonitors=sum_ratemonitors,
     )
 
