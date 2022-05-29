@@ -8,7 +8,7 @@ logfile=$base/log.txt
 #set -e -o pipefail
 
 mkdir -p $base
-for m in 5 10 50; do
+for m in 2 4 8 16 32 64 128 256; do
     for duration in 10; do
         for prm_flag in "no-" "" ; do
             args="--resultsfolder $resultsfolder \
