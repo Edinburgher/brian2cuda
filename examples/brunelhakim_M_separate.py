@@ -84,6 +84,8 @@ codefolder = '/media/mario/566899FF6899DE55/temp/code'
 # monitors (neede for plot generation)
 monitors = True
 
+profiling = True
+
 # single precision
 single_precision = False
 
@@ -113,6 +115,7 @@ bundle_mode = True
 params = {'devicename': devicename,
           'resultsfolder': resultsfolder,
           'codefolder': codefolder,
+          'profiling': profiling,
           'N': N,
           'M': nNetworks,
           'monitors': monitors,
