@@ -8,8 +8,14 @@ from .device import cuda_standalone_device
 from . import binomial
 from . import timedarray
 
+
 from . import _version
-__version__ = _version.get_versions()['version']
+
+__version__ = _version.get_versions()["version"]
+
+
+# make the test suite available via brian2cuda.test()
+from .tests import run as test
 
 
 def example_run(device_name="cuda_standalone", directory=None, **build_options):
