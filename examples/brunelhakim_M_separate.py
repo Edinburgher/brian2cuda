@@ -4,14 +4,14 @@ from multiprocessing import Process, Value
 from examples.write_results_csv import append_total_run_time, write_results_csv
 
 
-def write_profiling_data():
+def write_results():
     # ###############################################################################
     # ## RESULTS COLLECTION
 
     if not os.path.exists(params['resultsfolder']):
         os.mkdir(params['resultsfolder'])  # for plots and profiling txt file
     if True:
-        multi_threading_type = 'multiprocess' if params['multi_processing'] else 'None'
+        multi_threading_type = 'openmp' if params['openmp'] else 'GPU' if params['devicename'] == 'cuda_standalone' else 'none'
         write_results_csv(
             benchmarkfolder, network_count=params['M'],
             device_name=params['devicename'], duration=params['duration'], has_PRMs=params['PRMs'], is_merged=False,
@@ -25,7 +25,7 @@ def write_profiling_data():
             synapses_pre_push_spikes=synapses_pre_push_spikes,
             spikemonitor=spikemonitor,
             statemonitor=statemonitor,
-            sum_ratemonitors=sum_ratemonitors,
+            sum_ratemonitors=sum_ratemonitors, profiling=params['profiling']
         )
     profilingpath = os.path.join(params['resultsfolder'], '{}.txt'.format(name))
     with open(profilingpath, 'w') as profiling_file:
@@ -89,8 +89,8 @@ profiling = True
 # single precision
 single_precision = False
 
-# multi threading
-multi_processing = False
+# openmp
+openmp = False
 
 # benchmark folder
 benchmarkfolder = '.'
@@ -121,7 +121,7 @@ params = {'devicename': devicename,
           'monitors': monitors,
           'PRMs': run_PRMs,
           'single_precision': single_precision,
-          'multi_processing': multi_processing,
+          'openmp': openmp,
           'duration': duration,
           'partitions': num_blocks,
           'atomics': atomics,
@@ -145,7 +145,8 @@ from brian2 import *
 if params['devicename'] == 'cuda_standalone':
     import brian2cuda
 
-#params['cpp_threads'] = 16
+if params['openmp']:
+    params['cpp_threads'] = 20
 # set brian2 prefs from params dict
 name = set_prefs(params, prefs)
 
@@ -173,12 +174,7 @@ muext = 25 * mV
 eqs = """
 dV/dt = (-V+muext + sigmaext * sqrt(tau) * xi)/tau : volt
 """
-
-times = {'last_run': 0.0, 'compile': 0.0, 'run_binary': 0.0}
-if params['multi_processing']:
-    counter = Value(ctypes.py_object, times)
-else:
-    set_device(params['devicename'], directory=codefolder, build_on_run=False, debug=False)
+set_device(params['devicename'], directory=codefolder, build_on_run=False, debug=False)
 
 networks = {}
 PRMs = {}
@@ -198,10 +194,7 @@ statemonitor= 0
 sum_ratemonitors= 0
 
 def run_sim(m):
-    if params['multi_processing']:
-        set_device(params['devicename'], directory=codefolder+str(m), run=True, debug=False)
-    else:
-        set_device(params['devicename'], directory=codefolder, run=True, debug=False)
+    set_device(params['devicename'], directory=codefolder, run=True, debug=False)
     networks[m] = Network()
 
     group = NeuronGroup(params['N'], eqs, threshold='V>theta',
@@ -214,16 +207,19 @@ def run_sim(m):
     networks[m].add(conn)
 
     if params['monitors']:
-        statemons[m] = StateMonitor(group, 'V', record=True)
+        statemons[m] = StateMonitor(group[0], 'V', record=True)
         networks[m].add(statemons[m])
         spikemons[m] = SpikeMonitor(group)
         networks[m].add(spikemons[m])
         if params['PRMs']:
             PRMs[m] = PopulationRateMonitor(group)
             networks[m].add(PRMs[m])
-    networks[m].run(duration, report='text', profile=True)
-    if True or params['multi_processing']:
-        profiling_dict = dict(networks[m].profiling_info)
+    networks[m].run(duration, report='text', profile=False)
+    if True:
+        if params['profiling']:
+            profiling_dict = dict(networks[m].profiling_info)
+        else:
+            profiling_dict = dict()
         global last_run_time
         global compilation_time
         global binary_run_time
@@ -248,7 +244,7 @@ def run_sim(m):
 
     print('the generated model in {} needs to removed manually if wanted'.format(codefolder))
 
-if params['multi_processing']:
+if False:
     ps = []
     for m in range(0, params['M']):
         p=Process(target=run_sim, args=(m,))
@@ -263,7 +259,7 @@ else:
     for m in range(0, params['M']):
         run_sim(m)
     #device.build(directory=codefolder, compile=True, run=True, debug=False, clean=True)
-    write_profiling_data()
+    write_results()
     # for m in range(0, params['M']):
     #     print_results(spikemons[m], PRMs[m], m)
 
@@ -271,4 +267,4 @@ else:
     print('compilation time = ', compilation_time)
     print('Binary run time: ', binary_run_time)
 print('Total time: ', time.time()-start, 'seconds.')
-append_total_run_time(benchmarkfolder,time.time()-start)
+append_total_run_time(benchmarkfolder,time.time()-start, profiling=params['profiling'])

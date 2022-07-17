@@ -6,27 +6,29 @@ def write_results_csv(folder, device_name, network_count, duration, has_PRMs, is
                       last_run_time, compilation_time, binary_run_time,
                       neurongroup_stateupdater, neurongroup_thresholder, neurongroup_resetter,
                       synapses_pre, synapses_pre_push_spikes,
-                      spikemonitor, statemonitor, sum_ratemonitors):
-    file = os.path.join(folder, "benchmark.csv")
-    is_new = os.path.exists(file)
+                      spikemonitor, statemonitor, sum_ratemonitors, profiling=True):
+    file = os.path.join(folder, str(profiling)+"benchmark.csv")
+    exists = os.path.exists(file)
     with open(file, "a", newline='') as f:
-        if not is_new:
+        if not exists:
             # Create header
             f.write("device_name,network_count,duration,has_PRMs,is_merged,multithreading_type,uses_conditional_connect,")
             f.write("last_run_time,compilation_time,binary_run_time,")
-            f.write("neurongroup_stateupdater,neurongroup_thresholder,neurongroup_resetter,")
-            f.write("synapses_pre,synapses_pre_push_spikes,")
-            f.write("spikemonitor,statemonitor,sum_ratemonitors,")
+            if (profiling):
+                f.write("neurongroup_stateupdater,neurongroup_thresholder,neurongroup_resetter,")
+                f.write("synapses_pre,synapses_pre_push_spikes,")
+                f.write("spikemonitor,statemonitor,sum_ratemonitors,")
             f.write("total_run_time")
             f.write("\n")
         f.write(f'{device_name},{network_count},{duration},{has_PRMs},{is_merged},{multithreading_type},{uses_conditional_connect},')
         f.write(f'{last_run_time},{compilation_time},{binary_run_time},')
-        f.write(f'{neurongroup_stateupdater},{neurongroup_thresholder}, {neurongroup_resetter},')
-        f.write(f'{synapses_pre},{synapses_pre_push_spikes},')
-        f.write(f'{spikemonitor},{statemonitor},{sum_ratemonitors},')
+        if (profiling):
+            f.write(f'{neurongroup_stateupdater},{neurongroup_thresholder}, {neurongroup_resetter},')
+            f.write(f'{synapses_pre},{synapses_pre_push_spikes},')
+            f.write(f'{spikemonitor},{statemonitor},{sum_ratemonitors},')
 
-def append_total_run_time(folder, total_run_time):
-    file = os.path.join(folder, "benchmark.csv")
+def append_total_run_time(folder, total_run_time, profiling=True):
+    file = os.path.join(folder, str(profiling)+"benchmark.csv")
     with open(file, "a", newline='') as f:
         f.write(f'{total_run_time}')
         f.write("\n")

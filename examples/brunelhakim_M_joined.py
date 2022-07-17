@@ -26,7 +26,7 @@ monitors = True
 single_precision = False
 
 # multi threading
-multi_threading = True
+openmp = False
 
 # run multiple PRMs
 run_PRMs = True
@@ -60,7 +60,7 @@ params = {'devicename': devicename,
           'monitors': monitors,
           'PRMs': run_PRMs,
           'single_precision': single_precision,
-          'multi_threading': multi_threading,
+          'openmp': openmp,
           'duration': duration,
           'use_conditional_connect': use_conditional_connect,
           'partitions': num_blocks,
@@ -88,8 +88,8 @@ if params['devicename'] == 'cuda_standalone':
     import brian2cuda
 
 
-if params['devicename'] == 'cpp_standalone' and params['multi_threading']:
-    params['cpp_threads'] = 16
+if params['devicename'] == 'cpp_standalone' and params['openmp']:
+    params['cpp_threads'] = 20
     multi_threading_type = "openmp"
 elif params['devicename'] == 'cuda_standalone':
     multi_threading_type = "GPU"
@@ -115,7 +115,7 @@ theta = 20*mV
 tau = 20*ms
 delta = 2*ms
 taurefr = 2*ms
-duration = duration*second
+duration = params['duration']*second
 C = 1000
 sparseness = float(C)/params['N']
 J = .1*mV
@@ -157,47 +157,53 @@ if not params['use_conditional_connect']:
     network.add(conn)
 
 if params['monitors']:
-    statemon = StateMonitor(group, 'V', record=True)
-    network.add(statemon)
+
     spikemon = SpikeMonitor(group)
     network.add(spikemon)
     if params['PRMs']:
         PRMs = []
+        statemons = []
         # PopulationRateMonitor results can not be "untangled" after the simulation
         for subgroup in subgroups:
             PRM = PopulationRateMonitor(subgroup)
             network.add(PRM)
             PRMs.append(PRM)
+            statemon = StateMonitor(subgroup[0], 'V', record=True)
+            statemons.append(statemon)
+            network.add(statemon)
 
 
-network.run(duration, report='text', profile=params['profiling'])
+network.run(duration, report='text', profile=False)
 #
 # ###############################################################################
 # ## RESULTS COLLECTION
 
 if not os.path.exists(params['resultsfolder']):
     os.mkdir(params['resultsfolder']) # for plots and profiling txt file
-if params['profiling']:
-    from write_results_csv import write_results_csv, append_total_run_time
 
+from write_results_csv import write_results_csv, append_total_run_time
+if (params['profiling']):
     profiling_dict = dict(network.profiling_info)
-    sum_ratemonitors = sum([v for (k,v) in profiling_dict.items() if 'ratemonitor' in k])
-    write_results_csv(
-        benchmarkfolder, network_count=params['M'],
-        device_name=params['devicename'], duration=params['duration'], has_PRMs=params['PRMs'], is_merged=True,
-        multithreading_type=multi_threading_type, uses_conditional_connect=params['use_conditional_connect'],
-        last_run_time=device._last_run_time, compilation_time=device.timers['compile']['all'],
-        binary_run_time=device.timers['run_binary'],
-        neurongroup_stateupdater=profiling_dict['neurongroup_stateupdater_codeobject'],
-        neurongroup_thresholder=profiling_dict['neurongroup_thresholder_codeobject'],
-        neurongroup_resetter=profiling_dict['neurongroup_resetter_codeobject'],
-        synapses_pre=profiling_dict['synapses_pre_codeobject'],
-        synapses_pre_push_spikes=profiling_dict['synapses_pre_push_spikes'],
-        spikemonitor=profiling_dict['spikemonitor_codeobject'],
-        statemonitor=profiling_dict['statemonitor_codeobject'],
-        sum_ratemonitors=sum_ratemonitors,
-    )
+else:
+    profiling_dict = dict()
+sum_ratemonitors = sum([v for (k,v) in profiling_dict.items() if 'ratemonitor' in k])
+write_results_csv(
+benchmarkfolder, network_count=params['M'],
+device_name=params['devicename'], duration=params['duration'], has_PRMs=params['PRMs'], is_merged=True,
+multithreading_type=multi_threading_type, uses_conditional_connect=params['use_conditional_connect'],
+last_run_time=device._last_run_time, compilation_time=device.timers['compile']['all'],
+binary_run_time=device.timers['run_binary'],
+neurongroup_stateupdater=sum([v for (k,v) in profiling_dict.items() if 'stateupdater' in k]),
+neurongroup_thresholder=sum([v for (k,v) in profiling_dict.items() if 'neurongroup_thresholder' in k]),
+neurongroup_resetter=sum([v for (k,v) in profiling_dict.items() if 'neurongroup_resetter_codeobject' in k]),
+synapses_pre=sum([v for (k,v) in profiling_dict.items() if 'synapses_pre_codeobject' in k]),
+synapses_pre_push_spikes=sum([v for (k,v) in profiling_dict.items() if 'synapses_pre_push_spikes' in k]),
+spikemonitor=sum([v for (k,v) in profiling_dict.items() if 'spikemonitor' in k]),
+statemonitor=sum([v for (k,v) in profiling_dict.items() if 'statemonitor' in k]),
+sum_ratemonitors=sum_ratemonitors, profiling=params['profiling']
+)
 
+if params['profiling']:
     print(profiling_summary())
     profilingpath = os.path.join(params['resultsfolder'], '{}.txt'.format(name))
     with open(profilingpath, 'w') as profiling_file:
@@ -207,9 +213,9 @@ if params['profiling']:
             '\ncompilation time = ' + str(device.timers['compile']['all']) +
             '\nbinary run time = ' + str(device.timers['run_binary'])
         )
-        print('profiling information saved in {}'.format(profilingpath))
+    print('profiling information saved in {}'.format(profilingpath))
 
-if params['monitors']:
+if False and params['monitors']:
     for m in range(0, params['M']):
         lower = m * params['N']
         upper = (m+1) * params['N']
@@ -245,4 +251,4 @@ print('_last_run_time = ', device._last_run_time)
 print('compilation time = ', device.timers['compile']['all'])
 print('Binary run time: ', device.timers['run_binary'])
 print('Total time: ', time.time()-start, 'seconds.')
-append_total_run_time(benchmarkfolder,time.time()-start)
+append_total_run_time(benchmarkfolder,time.time()-start, profiling=params['profiling'])
