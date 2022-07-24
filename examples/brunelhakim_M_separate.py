@@ -207,7 +207,7 @@ def run_sim(m):
     networks[m].add(conn)
 
     if params['monitors']:
-        statemons[m] = StateMonitor(group[0], 'V', record=True)
+        statemons[m] = StateMonitor(group, 'V', record=[0])
         networks[m].add(statemons[m])
         spikemons[m] = SpikeMonitor(group)
         networks[m].add(spikemons[m])

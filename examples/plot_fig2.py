@@ -56,5 +56,5 @@ for has_monitors in [True, False]:
     #plt.plot(singlethread_sep_data)
     plt.legend()
     plt.title(monitor_string + '-'+ profiling_datapoint)
-    plt.savefig('fig2-' + monitor_string + '-'+ profiling_datapoint +'.png')
+    plt.savefig('fig2-new-' + monitor_string + '-'+ profiling_datapoint +'.png')
     plt.clf()

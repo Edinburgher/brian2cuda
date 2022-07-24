@@ -160,17 +160,16 @@ if params['monitors']:
 
     spikemon = SpikeMonitor(group)
     network.add(spikemon)
+    statemon = StateMonitor(group, 'V', record=[m*param_N for m in range(0, params['M'])])
+    network.add(statemon)
+
     if params['PRMs']:
         PRMs = []
-        statemons = []
         # PopulationRateMonitor results can not be "untangled" after the simulation
         for subgroup in subgroups:
             PRM = PopulationRateMonitor(subgroup)
             network.add(PRM)
             PRMs.append(PRM)
-            statemon = StateMonitor(subgroup[:1], 'V', record=True)
-            statemons.append(statemon)
-            network.add(statemon)
 
 
 network.run(duration, report='text', profile=params['profiling'])
