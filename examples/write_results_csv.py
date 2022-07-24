@@ -2,6 +2,9 @@
 # ## RESULTS COLLECTION
 import os
 
+def getProfilingString(isProfiled):
+    return "profiling" if isProfiled else "no-profiling"
+
 def write_results_csv(folder, device_name, network_count, duration, has_PRMs, is_merged, multithreading_type, uses_conditional_connect,
                       last_run_time, compilation_time, binary_run_time,
                       neurongroup_stateupdater, neurongroup_thresholder, neurongroup_resetter,
@@ -12,7 +15,7 @@ def write_results_csv(folder, device_name, network_count, duration, has_PRMs, is
     with open(file, "a", newline='') as f:
         if not exists:
             # Create header
-            f.write("device_name,network_count,duration,has_PRMs,is_merged,multithreading_type,uses_conditional_connect,")
+            f.write("device_name,network_count,duration,has_monitors,is_merged,multithreading_type,uses_conditional_connect,")
             f.write("last_run_time,compilation_time,binary_run_time,")
             if (profiling):
                 f.write("neurongroup_stateupdater,neurongroup_thresholder,neurongroup_resetter,")
@@ -23,7 +26,7 @@ def write_results_csv(folder, device_name, network_count, duration, has_PRMs, is
         f.write(f'{device_name},{network_count},{duration},{has_PRMs},{is_merged},{multithreading_type},{uses_conditional_connect},')
         f.write(f'{last_run_time},{compilation_time},{binary_run_time},')
         if (profiling):
-            f.write(f'{neurongroup_stateupdater},{neurongroup_thresholder}, {neurongroup_resetter},')
+            f.write(f'{neurongroup_stateupdater},{neurongroup_thresholder},{neurongroup_resetter},')
             f.write(f'{synapses_pre},{synapses_pre_push_spikes},')
             f.write(f'{spikemonitor},{statemonitor},{sum_ratemonitors},')
 

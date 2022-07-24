@@ -14,14 +14,14 @@ def write_results():
         multi_threading_type = 'openmp' if params['openmp'] else 'GPU' if params['devicename'] == 'cuda_standalone' else 'none'
         write_results_csv(
             benchmarkfolder, network_count=params['M'],
-            device_name=params['devicename'], duration=params['duration'], has_PRMs=params['PRMs'], is_merged=False,
+            device_name=params['devicename'], duration=params['duration'], has_PRMs=params['monitors'], is_merged=False,
             multithreading_type=multi_threading_type, uses_conditional_connect='N/A',
             last_run_time=last_run_time, compilation_time=compilation_time,
             binary_run_time=binary_run_time,
             neurongroup_stateupdater=neurongroup_stateupdater,
             neurongroup_thresholder=neurongroup_thresholder,
             neurongroup_resetter=neurongroup_resetter,
-            synapses_pre=synapses_pre_and_push_spikes,
+            synapses_pre=synapses_pre,
             synapses_pre_push_spikes=synapses_pre_push_spikes,
             spikemonitor=spikemonitor,
             statemonitor=statemonitor,
@@ -187,7 +187,7 @@ binary_run_time= 0
 neurongroup_stateupdater= 0
 neurongroup_thresholder= 0
 neurongroup_resetter= 0
-synapses_pre_and_push_spikes = 0
+synapses_pre= 0
 synapses_pre_push_spikes= 0
 spikemonitor= 0
 statemonitor= 0
@@ -214,7 +214,7 @@ def run_sim(m):
         if params['PRMs']:
             PRMs[m] = PopulationRateMonitor(group)
             networks[m].add(PRMs[m])
-    networks[m].run(duration, report='text', profile=False)
+    networks[m].run(duration, report='text', profile=params['profiling'])
     if True:
         if params['profiling']:
             profiling_dict = dict(networks[m].profiling_info)
@@ -225,7 +225,9 @@ def run_sim(m):
         global binary_run_time
         global neurongroup_stateupdater
         global neurongroup_thresholder
-        global synapses_pre_and_push_spikes
+        global neurongroup_resetter
+        global synapses_pre
+        global synapses_pre_push_spikes
         global spikemonitor
         global statemonitor
         global sum_ratemonitors
@@ -234,7 +236,9 @@ def run_sim(m):
         binary_run_time += device.timers['run_binary']
         neurongroup_stateupdater += sum([v for (k,v) in profiling_dict.items() if 'stateupdater' in k])
         neurongroup_thresholder += sum([v for (k,v) in profiling_dict.items() if 'thresholder' in k])
-        synapses_pre_and_push_spikes += sum([v for (k,v) in profiling_dict.items() if '_pre' in k])
+        neurongroup_resetter += sum([v for (k,v) in profiling_dict.items() if 'resetter' in k])
+        synapses_pre= sum([v for (k,v) in profiling_dict.items() if 'synapses_pre_codeobject' in k])
+        synapses_pre_push_spikes= sum([v for (k,v) in profiling_dict.items() if 'synapses_pre_push_spikes' in k])
         spikemonitor += sum([v for (k,v) in profiling_dict.items() if 'spikemonitor' in k])
         statemonitor +=sum([v for (k,v) in profiling_dict.items() if 'statemonitor' in k])
         sum_ratemonitors += sum([v for (k,v) in profiling_dict.items() if 'ratemonitor' in k])

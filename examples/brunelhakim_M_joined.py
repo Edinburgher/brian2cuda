@@ -168,12 +168,12 @@ if params['monitors']:
             PRM = PopulationRateMonitor(subgroup)
             network.add(PRM)
             PRMs.append(PRM)
-            statemon = StateMonitor(subgroup[0], 'V', record=True)
+            statemon = StateMonitor(subgroup[:1], 'V', record=True)
             statemons.append(statemon)
             network.add(statemon)
 
 
-network.run(duration, report='text', profile=False)
+network.run(duration, report='text', profile=params['profiling'])
 #
 # ###############################################################################
 # ## RESULTS COLLECTION
@@ -189,13 +189,13 @@ else:
 sum_ratemonitors = sum([v for (k,v) in profiling_dict.items() if 'ratemonitor' in k])
 write_results_csv(
 benchmarkfolder, network_count=params['M'],
-device_name=params['devicename'], duration=params['duration'], has_PRMs=params['PRMs'], is_merged=True,
+device_name=params['devicename'], duration=params['duration'], has_PRMs=params['monitors'], is_merged=True,
 multithreading_type=multi_threading_type, uses_conditional_connect=params['use_conditional_connect'],
 last_run_time=device._last_run_time, compilation_time=device.timers['compile']['all'],
 binary_run_time=device.timers['run_binary'],
 neurongroup_stateupdater=sum([v for (k,v) in profiling_dict.items() if 'stateupdater' in k]),
 neurongroup_thresholder=sum([v for (k,v) in profiling_dict.items() if 'neurongroup_thresholder' in k]),
-neurongroup_resetter=sum([v for (k,v) in profiling_dict.items() if 'neurongroup_resetter_codeobject' in k]),
+neurongroup_resetter=sum([v for (k,v) in profiling_dict.items() if 'neurongroup_resetter' in k]),
 synapses_pre=sum([v for (k,v) in profiling_dict.items() if 'synapses_pre_codeobject' in k]),
 synapses_pre_push_spikes=sum([v for (k,v) in profiling_dict.items() if 'synapses_pre_push_spikes' in k]),
 spikemonitor=sum([v for (k,v) in profiling_dict.items() if 'spikemonitor' in k]),
