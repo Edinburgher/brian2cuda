@@ -55,7 +55,9 @@ class NetworkMultiplier():
         for key in (synapses_export['identifiers']):
             namespace[key] = synapses_export['identifiers'][key]
         conn = Synapses(
-            group, group, on_pre=synapses_parameters['code'], delay=synapses_parameters['delay']
+            group, group,
+            on_pre=synapses_parameters['code'],
+            delay=synapses_parameters['delay']
         )
         for initializer in export['initializers_connectors']:
             if initializer['source'] == 'neurongroup' and initializer['type'] == 'connect':
@@ -86,7 +88,8 @@ class NetworkMultiplier():
 
         # Spike Monitor
         if export['components'].get('spikemonitor'):
-            spikemon = SpikeMonitor(group)
+            spikemon_export = export['components'].get('spikemonitor')
+            spikemon = SpikeMonitor(group, spikemon_export[0]['variables'])
             self.spikemon = spikemon
             network.add(spikemon)
 

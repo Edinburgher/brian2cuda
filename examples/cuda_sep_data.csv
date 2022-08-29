@@ -1,0 +1,2 @@
+,device_name,duration,has_monitors,is_merged,multithreading_type,network_count,is_recompile,last_run_time,compilation_time,binary_run_time,neurongroup_stateupdater,neurongroup_thresholder,neurongroup_resetter,synapses_pre,synapses_pre_push_spikes,spikemonitor,statemonitor,sum_ratemonitors,total_run_time
+2,cuda_standalone,1.0,True,False,GPU,128,1,149.54301,12.19312488873802,937.2528231541316,0.8490759999999999,0.185796,0.13252916666666664,0.2770705,0.0261845,0.3331631666666667,0.158734,0.14342716666666666,1760.83214978377

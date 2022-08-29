@@ -44,13 +44,20 @@ bottom_openmp_merged_data= 0
 bottom_singlethread_merged_data= 0
 bottom_cuda_merged_data = 0
 colors = ['b','g','r','c','m','y','k','tab:pink','tab:brown']
-for profiling_datapoint in ["neurongroup_stateupdater","neurongroup_thresholder",'neurongroup_resetter',"synapses_pre","synapses_pre_push_spikes","spikemonitor","statemonitor","sum_ratemonitors"]:
+for profiling_datapoint in ["neurongroup_stateupdater","neurongroup_thresholder",'neurongroup_resetter',"synapses_pre","synapses_pre_push_spikes","spikemonitor","statemonitor","sum_ratemonitors", "other"]:
   color = colors.pop()
   # legend.append(profiling_datapoint)
-  plt.bar("OpenMP seperate", openmp_sep_data[profiling_datapoint], color=color, label=profiling_datapoint, bottom=bottom_openmp_sep_data)
-  bottom_openmp_sep_data += openmp_sep_data[profiling_datapoint]
-  plt.bar("OpenMP merged", openmp_merged_data[profiling_datapoint],color=color, bottom=bottom_openmp_merged_data)
-  bottom_openmp_merged_data += openmp_merged_data[profiling_datapoint]
+  if profiling_datapoint == "other":
+    sep_value = openmp_sep_data["last_run_time"] - bottom_openmp_sep_data
+    merged_value = openmp_merged_data["last_run_time"] - bottom_openmp_merged_data
+  else:
+    sep_value = openmp_sep_data[profiling_datapoint]
+    merged_value = openmp_merged_data[profiling_datapoint]
+
+  plt.bar("OpenMP seperate", sep_value, color=color, label=profiling_datapoint, bottom=bottom_openmp_sep_data)
+  bottom_openmp_sep_data += sep_value
+  plt.bar("OpenMP merged", merged_value,color=color, bottom=bottom_openmp_merged_data)
+  bottom_openmp_merged_data += merged_value
 # plt.yscale('log')
 plt.ylabel('seconds')
 # plt.xticks(['1','2','4','8','16','32','64','128','256'])
@@ -63,13 +70,21 @@ plt.clf()
 
 legend = []
 colors = ['b','g','r','c','m','y','k','tab:pink','tab:brown']
-for profiling_datapoint in ["neurongroup_stateupdater","neurongroup_thresholder",'neurongroup_resetter',"synapses_pre","synapses_pre_push_spikes","spikemonitor","statemonitor","sum_ratemonitors"]:
+colors.pop()
+for profiling_datapoint in ["neurongroup_thresholder",'neurongroup_resetter',"synapses_pre","synapses_pre_push_spikes","spikemonitor","statemonitor","sum_ratemonitors", "other"]:
   color = colors.pop()
   legend.append(profiling_datapoint)
-  plt.bar("Single thread seperate", singlethread_sep_data[profiling_datapoint],color=color, bottom=bottom_singlethread_sep_data, label=profiling_datapoint)
-  bottom_singlethread_sep_data += singlethread_sep_data[profiling_datapoint]
-  plt.bar("Single thread merged", singlethread_merged_data[profiling_datapoint],color=color, bottom=bottom_singlethread_merged_data)
-  bottom_singlethread_merged_data += singlethread_merged_data[profiling_datapoint]
+  if profiling_datapoint == "other":
+    sep_value = singlethread_sep_data["last_run_time"] - singlethread_sep_data["neurongroup_stateupdater"] - bottom_singlethread_sep_data
+    merged_value = singlethread_merged_data["last_run_time"] - singlethread_merged_data["neurongroup_stateupdater"] - bottom_singlethread_merged_data
+  else:
+    sep_value = singlethread_sep_data[profiling_datapoint]
+    merged_value = singlethread_merged_data[profiling_datapoint]
+
+  plt.bar("Single thread seperate", sep_value,color=color, bottom=bottom_singlethread_sep_data, label=profiling_datapoint)
+  bottom_singlethread_sep_data += sep_value
+  plt.bar("Single thread merged", merged_value,color=color, bottom=bottom_singlethread_merged_data)
+  bottom_singlethread_merged_data += merged_value
 # plt.yscale('log')
 plt.ylabel('seconds')
 # plt.xticks(['1','2','4','8','16','32','64','128','256'])
@@ -80,13 +95,19 @@ plt.savefig('fig3-single-thread.png', bbox_inches='tight')
 plt.clf()
 legend = []
 colors = ['b','g','r','c','m','y','k','tab:pink','tab:brown']
-for profiling_datapoint in ["neurongroup_stateupdater","neurongroup_thresholder",'neurongroup_resetter',"synapses_pre","synapses_pre_push_spikes","spikemonitor","statemonitor","sum_ratemonitors"]:
+for profiling_datapoint in ["neurongroup_stateupdater","neurongroup_thresholder",'neurongroup_resetter',"synapses_pre","synapses_pre_push_spikes","spikemonitor","statemonitor","sum_ratemonitors", "other"]:
   color = colors.pop()
   legend.append(profiling_datapoint)
-  plt.bar("CUDA seperate", cuda_sep_data[profiling_datapoint],color=color, label=profiling_datapoint, bottom=bottom_cuda_sep_data)
-  bottom_cuda_sep_data += cuda_sep_data[profiling_datapoint]
-  plt.bar("CUDA merged", cuda_merged_data[profiling_datapoint],color=color, bottom=bottom_cuda_merged_data)
-  bottom_cuda_merged_data += cuda_merged_data[profiling_datapoint]
+  if profiling_datapoint == "other":
+    sep_value = cuda_sep_data["last_run_time"] - bottom_cuda_sep_data
+    merged_value = cuda_merged_data["last_run_time"] - bottom_cuda_merged_data
+  else:
+    sep_value = cuda_sep_data[profiling_datapoint]
+    merged_value = cuda_merged_data[profiling_datapoint]
+  plt.bar("CUDA seperate", sep_value,color=color, label=profiling_datapoint, bottom=bottom_cuda_sep_data)
+  bottom_cuda_sep_data += sep_value
+  plt.bar("CUDA merged", merged_value,color=color, bottom=bottom_cuda_merged_data)
+  bottom_cuda_merged_data += merged_value
 
 
 # plt.yscale('log')
