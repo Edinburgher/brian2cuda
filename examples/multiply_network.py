@@ -1,4 +1,3 @@
-import pprint
 from brian2 import *
 import os
 
@@ -12,12 +11,12 @@ class NetworkMultiplier():
         name = set_prefs(params, prefs)
 
         codefolder = os.path.join(params['codefolder'], name)
-        set_device('cpp_standalone', directory=codefolder,
+        set_device(params['devicename'], directory=codefolder,
                    compile=True, run=True, debug=False)
 
         namespace = {}
         export = runs[0]
-        pprint.pprint(export)
+        # pprint.pprint(export)
         network = Network()
         neurongroup_export = export['components']['neurongroup'][0]
         namespace['param_N'] = param_N = neurongroup_export['N']
@@ -118,9 +117,6 @@ class NetworkMultiplier():
         self.network.run(duration, report, report_period,
                          self.namespace, profile, level)
 
-    def getPRMs(self):
-        return self.PRMs
-
     def getSpikeMonitorResults(self):
         # TODO: Expand filtering to other variables.
         # variables is a set containing additional variables
@@ -156,3 +152,9 @@ class NetworkMultiplier():
                     continue
                 result[m]['V'].append(self.statemon.V[i])
         return result
+
+    def getNetwork(self):
+        return self.network
+
+    def getPRMs(self):
+        return self.PRMs

@@ -38,7 +38,7 @@ def write_results():
         print('profiling information saved in {}'.format(profilingpath))
 
 
-def print_results(spikemon, PRM, m):
+def print_results(spikemon, PRM, statemon, m):
 
     #
     # ###############################################################################
@@ -47,20 +47,24 @@ def print_results(spikemon, PRM, m):
     if not os.path.exists(params['resultsfolder']):
         os.mkdir(params['resultsfolder'])  # for plots and profiling txt file
     if params['monitors']:
-        subplot(211)
-        plot(spikemon.t / ms, spikemon.i, '.')
-        xlim(0, duration / ms)
+        # subplot(211)
+        (spikemon.t / ms, spikemon.i, '.')
+        # xlim(0, duration / ms)
+
+        # subplot(212)
+        (statemon.t / ms, statemon[0])
+        # xlim(0, duration / ms)
 
         if params['PRMs']:
-            subplot(212)
-            plot(PRM.t / ms, PRM.smooth_rate(window='flat', width=0.5 * ms) / Hz)
-            xlim(0, duration / ms)
+            # subplot(212)
+            (PRM.t / ms, PRM.smooth_rate(window='flat', width=0.5 * ms) / Hz)
+            # xlim(0, duration / ms)
             # show()
 
-        plotpath = os.path.join(params['resultsfolder'], '{}.png'.format(name + "_Network_" + str(m + 1)))
-        savefig(plotpath)
-        print('plot saved in {}'.format(plotpath))
-        clf()
+        # plotpath = os.path.join(params['resultsfolder'], '{}.png'.format(name + "_Network_" + str(m + 1)))
+        # savefig(plotpath)
+        # print('plot saved in {}'.format(plotpath))
+        # clf()
 
 
 
@@ -87,7 +91,7 @@ monitors = True
 profiling = True
 
 # single precision
-single_precision = False
+single_precision = True
 
 # openmp
 openmp = False
@@ -215,36 +219,36 @@ def run_sim(m):
             PRMs[m] = PopulationRateMonitor(group)
             networks[m].add(PRMs[m])
     networks[m].run(duration, report='text', profile=params['profiling'])
-    if True:
-        if params['profiling']:
-            profiling_dict = dict(networks[m].profiling_info)
-        else:
-            profiling_dict = dict()
-        global last_run_time
-        global compilation_time
-        global binary_run_time
-        global neurongroup_stateupdater
-        global neurongroup_thresholder
-        global neurongroup_resetter
-        global synapses_pre
-        global synapses_pre_push_spikes
-        global spikemonitor
-        global statemonitor
-        global sum_ratemonitors
-        last_run_time += device._last_run_time
-        compilation_time += device.timers['compile']['all']
-        binary_run_time += device.timers['run_binary']
-        neurongroup_stateupdater += sum([v for (k,v) in profiling_dict.items() if 'stateupdater' in k])
-        neurongroup_thresholder += sum([v for (k,v) in profiling_dict.items() if 'thresholder' in k])
-        neurongroup_resetter += sum([v for (k,v) in profiling_dict.items() if 'resetter' in k])
-        synapses_pre= sum([v for (k,v) in profiling_dict.items() if 'synapses_pre_codeobject' in k])
-        synapses_pre_push_spikes= sum([v for (k,v) in profiling_dict.items() if 'synapses_pre_push_spikes' in k])
-        spikemonitor += sum([v for (k,v) in profiling_dict.items() if 'spikemonitor' in k])
-        statemonitor +=sum([v for (k,v) in profiling_dict.items() if 'statemonitor' in k])
-        sum_ratemonitors += sum([v for (k,v) in profiling_dict.items() if 'ratemonitor' in k])
+
+    if params['profiling']:
+        profiling_dict = dict(networks[m].profiling_info)
+    else:
+        profiling_dict = dict()
+    global last_run_time
+    global compilation_time
+    global binary_run_time
+    global neurongroup_stateupdater
+    global neurongroup_thresholder
+    global neurongroup_resetter
+    global synapses_pre
+    global synapses_pre_push_spikes
+    global spikemonitor
+    global statemonitor
+    global sum_ratemonitors
+    last_run_time += device._last_run_time
+    compilation_time += device.timers['compile']['all']
+    binary_run_time += device.timers['run_binary']
+    neurongroup_stateupdater += sum([v for (k,v) in profiling_dict.items() if 'stateupdater' in k])
+    neurongroup_thresholder += sum([v for (k,v) in profiling_dict.items() if 'thresholder' in k])
+    neurongroup_resetter += sum([v for (k,v) in profiling_dict.items() if 'resetter' in k])
+    synapses_pre= sum([v for (k,v) in profiling_dict.items() if 'synapses_pre_codeobject' in k])
+    synapses_pre_push_spikes= sum([v for (k,v) in profiling_dict.items() if 'synapses_pre_push_spikes' in k])
+    spikemonitor += sum([v for (k,v) in profiling_dict.items() if 'spikemonitor' in k])
+    statemonitor +=sum([v for (k,v) in profiling_dict.items() if 'statemonitor' in k])
+    sum_ratemonitors += sum([v for (k,v) in profiling_dict.items() if 'ratemonitor' in k])
         # print_results(spikemons[m], PRMs[m], m)
-    device.reinit()
-    device.activate()
+    # device.reinit()
+    # device.activate()
 
     print('the generated model in {} needs to removed manually if wanted'.format(codefolder))
 
@@ -265,10 +269,13 @@ else:
     #device.build(directory=codefolder, compile=True, run=True, debug=False, clean=True)
     write_results()
     # for m in range(0, params['M']):
-    #     print_results(spikemons[m], PRMs[m], m)
+    result_extraction_start = time.time()
 
+    if params['monitors']:
+        print_results(spikemons[m], PRMs[m], statemons[m], m)
+    result_extraction_time = time.time()-result_extraction_start
     print('_last_run_time = ', last_run_time)
     print('compilation time = ', compilation_time)
     print('Binary run time: ', binary_run_time)
 print('Total time: ', time.time()-start, 'seconds.')
-append_total_run_time(benchmarkfolder,time.time()-start, profiling=params['profiling'])
+append_total_run_time(benchmarkfolder,time.time()-start, profiling=params['profiling'], result_extraction_time=result_extraction_time)

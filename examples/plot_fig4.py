@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 pd.options.mode.chained_assignment = None  # default='warn'
-data = pd.read_csv("Truebenchmark.csv")
+data = pd.read_csv("Truebenchmark_new.csv")
 
 data = data[(data['has_monitors'] == True)]
 data = data.groupby(['device_name','network_count','duration','is_recompile','has_monitors','is_merged','multithreading_type'], as_index=False).mean()
@@ -81,6 +81,8 @@ plt.bar("OpenMP sep", openmp_sep_data['total_run_time'] - openmp_sep_data['compi
 
 plt.gca().set_prop_cycle(None)
 
+print(openmp_merged_data['binary_run_time']-openmp_merged_data['last_run_time'])
+
 print(openmp_merged_data['compilation_time'])
 print(openmp_merged_data['last_run_time'])
 
@@ -103,6 +105,7 @@ plt.bar("CUDA sep", cuda_sep_data['last_run_time'],label="Last run time", bottom
 plt.bar("CUDA sep", cuda_sep_data['total_run_time'] - cuda_sep_data['compilation_time']- cuda_sep_data['binary_run_time'],label="Overhead", bottom=cuda_sep_data['compilation_time']+cuda_sep_data['binary_run_time'])
 
 
+print(cuda_merged_data['binary_run_time']-cuda_merged_data['last_run_time'])
 print(cuda_merged_data['compilation_time'])
 print(cuda_merged_data['last_run_time'])
 plt.gca().set_prop_cycle(None)
@@ -120,5 +123,5 @@ plt.xticks(['OpenMP sep',"OpenMP mer","Single sep","Single mer","CUDA sep","CUDA
 plt.legend(['Compile','Setup and Finalisation','Last run time', 'Overhead'],loc='center left', bbox_to_anchor=(1, 0.5))
 fig = plt.gcf()
 fig.set_size_inches(18, 11)
-plt.savefig('fig4-cuda.svg', bbox_inches='tight', dpi=300)
+plt.savefig('fig4-cuda_new.png', bbox_inches='tight', dpi=300)
 plt.clf()

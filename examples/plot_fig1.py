@@ -2,8 +2,8 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 
-data = pd.read_csv("Falsebenchmark.csv")
-data = data.groupby(['device_name','network_count','duration','is_merged','multithreading_type'], as_index=False).min()
+data = pd.read_csv("Falsebenchmark_new.csv")
+data = data.groupby(['device_name','network_count','duration','is_merged','multithreading_type'], as_index=False).mean()
 data.to_csv('data.csv')
 sep_data = data[(data['is_merged'] == False)]
 len_sep_data=len(sep_data['network_count'])
@@ -44,4 +44,4 @@ plt.xlabel('Number of networks')
 
 #plt.plot(singlethread_sep_data)
 plt.legend()
-plt.savefig('fig1.png')
+plt.savefig('fig1_new.png')

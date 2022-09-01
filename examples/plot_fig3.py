@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 
-data = pd.read_csv("Truebenchmark.csv")
+data = pd.read_csv("Truebenchmark_new.csv")
 
 data = data[(data['has_monitors'] == True)]
 data = data.groupby(['device_name','network_count','duration','has_monitors','is_merged','multithreading_type'], as_index=False).mean()
@@ -43,7 +43,7 @@ bottom_cuda_sep_data= 0
 bottom_openmp_merged_data= 0
 bottom_singlethread_merged_data= 0
 bottom_cuda_merged_data = 0
-colors = ['b','g','r','c','m','y','k','tab:pink','tab:brown']
+colors = ['red','deepskyblue','royalblue','darkblue','yellow','gold','palegreen','limegreen','darkgreen']
 for profiling_datapoint in ["neurongroup_stateupdater","neurongroup_thresholder",'neurongroup_resetter',"synapses_pre","synapses_pre_push_spikes","spikemonitor","statemonitor","sum_ratemonitors", "other"]:
   color = colors.pop()
   # legend.append(profiling_datapoint)
@@ -65,11 +65,11 @@ plt.ylabel('seconds')
 # Shrink current axis by 20%
 plt.tight_layout()
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.savefig('fig3-openmp.png', bbox_inches='tight')
+plt.savefig('fig3-openmp-new.png', bbox_inches='tight')
 plt.clf()
 
 legend = []
-colors = ['b','g','r','c','m','y','k','tab:pink','tab:brown']
+colors = ['red','deepskyblue','royalblue','darkblue','yellow','gold','palegreen','limegreen','darkgreen']
 colors.pop()
 for profiling_datapoint in ["neurongroup_thresholder",'neurongroup_resetter',"synapses_pre","synapses_pre_push_spikes","spikemonitor","statemonitor","sum_ratemonitors", "other"]:
   color = colors.pop()
@@ -91,10 +91,10 @@ plt.ylabel('seconds')
 #plt.plot(singlethread_sep_data)
 plt.tight_layout()
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.savefig('fig3-single-thread.png', bbox_inches='tight')
+plt.savefig('fig3-single-thread-new.png', bbox_inches='tight')
 plt.clf()
 legend = []
-colors = ['b','g','r','c','m','y','k','tab:pink','tab:brown']
+colors = ['red','deepskyblue','royalblue','darkblue','yellow','gold','palegreen','limegreen','darkgreen']
 for profiling_datapoint in ["neurongroup_stateupdater","neurongroup_thresholder",'neurongroup_resetter',"synapses_pre","synapses_pre_push_spikes","spikemonitor","statemonitor","sum_ratemonitors", "other"]:
   color = colors.pop()
   legend.append(profiling_datapoint)
@@ -116,5 +116,5 @@ plt.ylabel('seconds')
 #plt.plot(singlethread_sep_data)
 plt.tight_layout()
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.savefig('fig3-cuda.png', bbox_inches='tight')
+plt.savefig('fig3-cuda-new.png', bbox_inches='tight')
 plt.clf()

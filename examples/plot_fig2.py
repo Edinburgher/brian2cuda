@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 for has_monitors in [True, False]:
-  data = pd.read_csv("Truebenchmark.csv")
+  data = pd.read_csv("Truebenchmark_new.csv")
   monitor_string = "monitors" if has_monitors else "no-monitors"
   data = data[(data['has_monitors'] == has_monitors)]
   data = data.groupby(['device_name','network_count','duration','has_monitors','is_merged','multithreading_type'], as_index=False).mean()
@@ -56,5 +56,5 @@ for has_monitors in [True, False]:
     #plt.plot(singlethread_sep_data)
     plt.legend()
     plt.title(monitor_string + '-'+ profiling_datapoint)
-    plt.savefig('fig2-new-' + monitor_string + '-'+ profiling_datapoint +'.png')
+    plt.savefig('fig2-000-new-' + monitor_string + '-'+ profiling_datapoint +'.png')
     plt.clf()
