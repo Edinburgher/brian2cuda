@@ -1,3 +1,4 @@
+import pprint
 from brian2 import *
 import os
 
@@ -16,7 +17,7 @@ class NetworkMultiplier():
 
         namespace = {}
         export = runs[0]
-        # pprint.pprint(export)
+        pprint.pprint(export)
         network = Network()
         neurongroup_export = export['components']['neurongroup'][0]
         namespace['param_N'] = param_N = neurongroup_export['N']
@@ -63,6 +64,15 @@ class NetworkMultiplier():
                 namespace['probability'] = probability = initializer.get('probability', 1)
                 namespace['condition'] = condition = initializer.get('condition')
         print("BEFORE CONNECT")
+        # for m in range(0, M):
+        #     lower = m * param_N
+        #     upper = (m+1) * param_N
+        #     subgroup = group[lower:upper]
+            
+        #     conn = Synapses(subgroup, subgroup, on_pre='V += -J', delay=2*msecond)
+        #     conn.connect(p=0.2)
+
+        #     network.add(conn)
         conn.connect(
             j="k for k in sample(i%param_M, param_M*param_N, param_M, p=probability)" +
               (("if " + condition) if condition else "")

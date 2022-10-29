@@ -1,14 +1,17 @@
+
+import time
+start = time.time()
 devicename = 'cuda_standalone'
-#devicename = 'cpp_standalone'
+devicename = 'cpp_standalone'
 
 # number of neurons
 N = 5000
 
 # number of networks to simulate
-nNetworks = 10
+nNetworks = 1
 
 # duration
-duration = .1
+duration = 1
 
 # whether to profile run
 profiling = True
@@ -71,6 +74,7 @@ from utils import set_prefs, update_from_command_line
 
 update_from_command_line(params)
 
+print("Before Import all:" + str(time.time()-start))
 # do the imports after parsing command line arguments (quicker --help)
 import os
 import matplotlib
@@ -80,15 +84,14 @@ from matplotlib.pyplot import figure, subplot, plot, xticks, ylabel, xlim, ylim,
 from numpy import zeros, arange, ones
 import numpy as np
 
-import time
-start = time.time()
+print("Before Import brian2cuda:" + str(time.time()-start))
 
 import brian2tools.baseexport
 from multiply_network import NetworkMultiplier
 from brian2 import *
 if params['devicename'] == 'cuda_standalone':
     import brian2cuda
-
+print("Import brian2cuda:" + str(time.time()-start))
 
 set_device('exporter')
 
@@ -128,9 +131,8 @@ J = .1*mV
 sigmaext = 1*mV
 muext = 25*mV
 
-eqs = """
-dV/dt = (-V+muext + sigmaext * sqrt(tau) * xi)/tau : volt
-"""
+eqs = """dV/dt = (-V+muext + sigmaext * sqrt(tau) * xi)
+                 /tau : volt"""
 
 network = Network()
 
@@ -179,6 +181,7 @@ if params['monitors']:
         #     PRMs.append(PRM)
 
 
+print("Befoer duplication:" + str(time.time()-start))
 duplicating_start = time.time()
 network.run(duration)#, report='text', profile=params['profiling'])
 network_multi = NetworkMultiplier(device.runs, params["M"], params)

@@ -68,7 +68,7 @@ def print_results(spikemon, PRM, statemon, m):
 
 
 
-devicename = 'cuda_standalone'
+devicename = 'cpp_standalone'
 
 # number of neurons
 N = 5000
@@ -80,10 +80,10 @@ nNetworks = 10
 duration = .1
 
 # folder to store plots and profiling information
-resultsfolder = '/media/mario/566899FF6899DE55/temp/results'
+resultsfolder = 'results'
 
 # folder for the code
-codefolder = '/media/mario/566899FF6899DE55/temp/code'
+codefolder = 'code'
 
 # monitors (neede for plot generation)
 monitors = True

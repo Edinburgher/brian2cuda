@@ -4,7 +4,7 @@ resultsfolder=$base/results
 logfile=$base/log.txt
 
 mkdir -p $base
-for monitors in "no-" ""; do
+for monitors in ""; do
 	for openmp in "no-" ""; do
 		for i in {1..3}; do
 			for j in {1..3}; do
