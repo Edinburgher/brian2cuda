@@ -3,13 +3,11 @@ Dynamics of a network of sparsely connected inhibitory current-based
 integrate-and-fire neurons. Individual neurons fire irregularly at
 low rate but the network is in an oscillatory global activity regime
 where neurons are weakly synchronized.
-
 Reference:
     "Fast Global Oscillations in Networks of Integrate-and-Fire
     Neurons with Low Firing Rates"
     Nicolas Brunel & Vincent Hakim
     Neural Computation 11, 1621-1671 (1999)
-
 Modification to original brian2 example: changed delay from constant to
     sampled from uniform distribution; remark: widening the delay
     distribution reduces the oscillatory power of the network
@@ -20,8 +18,8 @@ Modification to original brian2 example: changed delay from constant to
 ## PARAMETERS
 
 # select code generation standalone device
-devicename = 'cuda_standalone'
-#devicename = 'cpp_standalone'
+# devicename = 'cuda_standalone'
+devicename = 'cpp_standalone'
 
 # random seed for reproducible simulations
 seed = None
@@ -156,11 +154,11 @@ else:
     muext = 25*mV
 
 eqs = """
-dV/dt = (-V+muext + sigmaext * sqrt(tau) * xi)/tau : volt
+dV/dt = (-V+muext + sigmaext * sqrt(tau) * xi)/tau : volt (unless refractory)
 """
 
 group = NeuronGroup(params['N'], eqs, threshold='V>theta',
-                    reset='V=Vr', refractory=taurefr, method='euler')
+                    reset='V=Vr', refractory=taurefr)
 group.V = Vr
 
 # delayed synapses
@@ -195,23 +193,24 @@ if params['profiling']:
         print('profiling information saved in {}'.format(profilingpath))
 
 if params['monitors']:
-    style_file = os.path.join(os.path.dirname(__file__), 'figures.mplstyle')
-    plt.style.use(['seaborn-paper', style_file])
+    # style_file = os.path.join(os.path.dirname(__file__), 'figures.mplstyle')
+    # plt.style.use(['seaborn-paper', style_file])
     fig, axs = plt.subplots(3, 1, figsize=(7.08, 7.08/1.5), sharex=True,
                             constrained_layout=True)
 
-    axs[0].plot(S.t/ms, S.V[0].T/mV, 'k')
+    axs[0].plot(S.t[:]/ms, S.V[0][:].T/mV, 'k')
     axs[0].axhline(theta/mV, ls='--', c='C3', label=r"$\Theta$")
     axs[0].axhline(Vr/mV, ls='--', c='C2', label=r"$V_r$")
     axs[0].legend(framealpha=1, loc='center right')
     axs[0].set(ylim=(Vr/mV -2, theta/mV + 2), ylabel="$V$ [mV]")
 
-    axs[1].plot(M.t/ms, M.i, 'k.')
+    axs[1].plot(M.t[:]/ms, M.i[:], 'k.')
     axs[1].set(ylabel="Neuron ID", xlim=(0, params['runtime']/1000))
+    print(M.i[:])
 
-    axs[2].plot(LFP.t/ms, LFP.smooth_rate(window='flat', width=0.5*ms)/Hz,
+    axs[2].plot(LFP.t[:]/ms, LFP.smooth_rate(window='flat', width=0.5*ms)[:]/Hz,
                 color='#c53929')
-    axs[2].set(xlim=(0, params['runtime']/1000), xlabel="Time [ms]",
+    axs[2].set(xlim=(0, params['runtime']/ms), xlabel="Time [ms]",
                ylabel=r"Population rate [$\mathrm{s}^{-1}$]", ylim=(0, 20.2))
 
     fig.align_labels()

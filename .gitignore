@@ -54,3 +54,8 @@ tags
 
 # git worktrees are placed here
 worktrees/
+/examples/results/
+/examples/code/
+/frozen_repos/brian2/*
+examples/benchmark.csv
+examples/benchmark_multiple_networks/log.txt
